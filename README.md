@@ -30,3 +30,13 @@ Open the local URL printed by Streamlit (usually http://localhost:8501).
 - Excel reporting is implemented; PDF is intentionally not offered until a reliable Excel-to-PDF renderer is available (e.g. server-side Microsoft Excel automation) since PDF conversion may alter layout.
 - For multi-user/public deployment, add login, upload limits, malware scanning, audit records, and backups; current build is for trusted internal users.
 - Excel formulas or defined names targeting original row numbers are not supported in this template-specific implementation. The provided sample does not use defined print areas.
+
+## การนำเข้า Flash Report หลายไฟล์พร้อมกัน
+
+1. เปิดแท็บ **1. นำเข้าฐานข้อมูล**
+2. กด Browse files แล้วเลือกไฟล์ `.xlsx` หลายไฟล์พร้อมกัน (กด Ctrl หรือ Shift เพื่อเลือกหลายรายการ)
+3. กด **บันทึกไฟล์ทั้งหมดเข้าฐานข้อมูล**
+4. ระบบแสดงสถานะของแต่ละไฟล์, Source ID, จำนวน S/N และจำนวนชีต
+
+การนำเข้าแต่ละไฟล์แยกกัน หากไฟล์หนึ่งไม่ผ่านการตรวจสอบ ไฟล์อื่นจะยังถูกนำเข้าต่อไปตามปกติ
+**หมายเหตุ:** หากกดนำเข้าไฟล์เดิมซ้ำ ระบบจะสร้าง Source ID ใหม่และอาจเกิด S/N ซ้ำระหว่างแหล่งข้อมูลได้ ควรตรวจสอบที่แท็บจัดการฐานข้อมูล

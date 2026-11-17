@@ -13,13 +13,43 @@ st.caption('นำเข้า Flash Test Report, ค้นหา S/N และ�
 tab_upload, tab_search, tab_manage = st.tabs(['1. นำเข้าฐานข้อมูล', '2. ค้นหาและสร้างรายงาน', '3. จัดการฐานข้อมูล'])
 with tab_upload:
     st.subheader('อัปโหลด Flash Report ต้นฉบับ (.xlsx)')
-    uploaded = st.file_uploader('ไฟล์รายงานต้นฉบับ', type=['xlsx'], key='source_upload')
-    if st.button('บันทึกเข้าฐานข้อมูล', type='primary', disabled=uploaded is None):
-        try:
-            sid, count, sheets = index_upload(con, uploaded.name, uploaded.getvalue())
-            st.success(f'บันทึกสำเร็จ: ID {sid} | {count:,} S/N จาก {sheets} ชีต')
-        except Exception as e:
-            st.error(f'นำเข้าไม่สำเร็จ: {e}')
+    uploaded_files = st.file_uploader(
+        'เลือกไฟล์รายงานต้นฉบับได้หลายไฟล์ในครั้งเดียว',
+        type=['xlsx'], accept_multiple_files=True, key='source_upload'
+    )
+    if uploaded_files:
+        st.caption(f'เลือกแล้ว {len(uploaded_files):,} ไฟล์')
+        st.dataframe(
+            [{'ชื่อไฟล์': f.name, 'ขนาด (KB)': round(f.size / 1024, 1)}
+             for f in uploaded_files],
+            use_container_width=True, hide_index=True
+        )
+    if st.button('บันทึกไฟล์ทั้งหมดเข้าฐานข้อมูล', type='primary', disabled=not uploaded_files):
+        progress = st.progress(0, text='กำลังเตรียมนำเข้าข้อมูล')
+        results = []
+        successes = 0
+        serial_total = 0
+        for i, file in enumerate(uploaded_files, start=1):
+            progress.progress((i - 1) / len(uploaded_files), text=f'กำลังนำเข้า {i}/{len(uploaded_files)}: {file.name}')
+            try:
+                sid, count, sheets = index_upload(con, file.name, file.getvalue())
+                successes += 1
+                serial_total += count
+                results.append({'ไฟล์': file.name, 'สถานะ': 'สำเร็จ', 'Source ID': sid,
+                                'S/N': count, 'ชีต': sheets, 'รายละเอียด': ''})
+            except Exception as e:
+                results.append({'ไฟล์': file.name, 'สถานะ': 'ไม่สำเร็จ', 'Source ID': None,
+                                'S/N': 0, 'ชีต': 0, 'รายละเอียด': str(e)})
+            progress.progress(i / len(uploaded_files), text=f'ประมวลผลแล้ว {i}/{len(uploaded_files)} ไฟล์')
+        st.session_state['upload_results'] = results
+        st.session_state.pop('requested', None)
+        st.session_state.pop('matches', None)
+        if successes:
+            st.success(f'นำเข้าสำเร็จ {successes:,}/{len(uploaded_files):,} ไฟล์ รวม {serial_total:,} S/N')
+        if successes < len(uploaded_files):
+            st.warning(f'มี {len(uploaded_files) - successes:,} ไฟล์นำเข้าไม่สำเร็จ ดูรายละเอียดในตาราง')
+    if 'upload_results' in st.session_state:
+        st.dataframe(st.session_state['upload_results'], use_container_width=True, hide_index=True)
     st.info('โครงสร้างที่รองรับ: S/N ในคอลัมน์ A เริ่มแถว 7, ค่า Flash Test อยู่คอลัมน์ B:J; Header อยู่แถว 1–6')
 
 with tab_search:
